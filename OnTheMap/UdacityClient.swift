@@ -11,41 +11,40 @@ import Foundation
 class UdacityClient: NSObject {
 
     var sharedSession = URLSession.shared
-    var sessionID : String? = nil
+    var sessionID: String? = nil
     
-    // MARK: Constants
-    struct Constants {
-        static let ApiScheme = "https://"
-        static let ApiHost = "www.udacity.com/api/session"
+    // MARK: Shared Instance
+    
+    class func sharedInstance() -> UdacityClient {
+        struct Singleton {
+            static var sharedInstance = UdacityClient()
+        }
+        return Singleton.sharedInstance
     }
+    
+    // MARK: Custom model methods
     
     func authenticateUser(username: String, password: String, completionHandlerForAuth: @escaping (_ success: Bool, _ error: String?) -> Void) {
         
-        getSessionID(username: username, password: password) { (success, sessionID, error) in
+        let _ = createSession(UdacityConstants.ApiScheme + UdacityConstants.ApiSessionUrl, username: username, password: password) { (result, success, error) in
             
             if success {
-                print("SESSION ID: \(sessionID)")
+                guard let session = result?["session"], let sessionID = session["id"] as? String else {
+                    print("Error getting session from result")
+                    return
+                }
                 self.sessionID = sessionID
+                completionHandlerForAuth(true, nil)
+                
             } else {
-                completionHandlerForAuth(false, "Error getting session ID (getSessionID)")
+                completionHandlerForAuth(false, error)
             }
         }
     }
     
-    func getSessionID(username: String, password: String, completionHandlerForSession: @escaping (_ success: Bool, _ sessionID: String?, _ error: String?) -> Void) {
-        let _ = taskForGET(Constants.ApiScheme + Constants.ApiHost, username: username, password: password) { (result, success, error) in
-            if let error = error {
-                print(error)
-                completionHandlerForSession(false, nil, "Login Failed (getSessionID).")
-            } else {
-                // GRAB SESSION ID
-            }
-        }
-    }
-    
-    func taskForGET(_ url_path: String, username: String, password: String, completionHandlerForGET: @escaping (_ result: AnyObject?, _ success: Bool, _ error: String?) -> Void) -> URLSessionDataTask {
+    func createSession(_ url_path: String, username: String, password: String, completionHandlerForPOST: @escaping (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) -> URLSessionDataTask {
         
-        // Step 1: Make request
+        // Make network request
         
         let request = NSMutableURLRequest(url: URL(string: url_path)!)
         request.httpMethod = "POST"
@@ -53,35 +52,16 @@ class UdacityClient: NSObject {
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = "{\"udacity\": {\"username\": \"\(username)\", \"password\": \"\(password)\"}}".data(using: String.Encoding.utf8)
         
-        print("\(request)")
-        
-        // Step 2: Create a session ID
-        
+        // Create a session ID
         let task = sharedSession.dataTask(with: request as URLRequest) { data, response, error in
-            func sendError(_ error: String) {
-                print(error)
-            }
             
-            // GUARD: Was there an error?
-            guard (error == nil) else {
-                sendError("There was an error with your request: \(error)")
-                return
-            }
+            Utilities.shared.handleErrors(data, response, error as NSError?, completionHandler: completionHandlerForPOST)
             
-            // GUARD: Did we get a successful 2XX response?
-            guard let statusCode = (response as? HTTPURLResponse)?.statusCode, statusCode >= 200 && statusCode <= 299 else {
-                sendError("Your request returned a status code other than 2xx!")
-                return
-            }
+            // Remove first five numbers of data
+            let newData = data?.subdata(in: Range(uncheckedBounds: (5, data!.count)))
             
-            // GUARD: Was there any data returned?
-            guard let data = data else {
-                sendError("No data was returned by the request!")
-                return
-            }
-            
-            // Parse the data and use the data
-             self.convertDataWithCompletionHandler(data, completionHandlerForConvertedData: completionHandlerForGET)
+            // Parse and use the data
+            self.convertDataWithCompletionHandler(newData!, completionHandlerForConvertedData: completionHandlerForPOST)
             
         }
         task.resume()
@@ -89,7 +69,68 @@ class UdacityClient: NSObject {
         return task
     }
     
-    private func convertDataWithCompletionHandler(_ data: Data, completionHandlerForConvertedData: (_ result: AnyObject?, _ success: Bool, _ error: String?) -> Void) {
+    func endUserSession(completionHandlerForDeleteSession: @escaping (_ success: Bool, _ error: String?) -> Void) {
+        let _ = deleteSession { (result, success, error) in
+            if success {
+                guard let session = result?["session"], let id = session["id"] else {
+                    print("Error deleting session")
+                    return
+                }
+                
+                print("session_id: \(id)")
+                completionHandlerForDeleteSession(true, nil)
+            } else {
+                completionHandlerForDeleteSession(false, error)
+            }
+        }
+    }
+    
+//    func getUserData(_ userID: Int) -> URLSessionDataTask {
+//        let request = NSMutableURLRequest(url: URL(string: Constants.ApiUserIdUrl + "\(userID)")!)
+//        let session = URLSession.shared
+//        let task = session.dataTask(with: request as URLRequest) { data, response, error in
+//            if error != nil {
+//                return
+//            }
+//            let newData = data?.subdata(in: Range(uncheckedBounds: (5, data!.count)))
+//            print(NSString(data: newData!, encoding: String.Encoding.utf8.rawValue)!)
+//        }
+//        task.resume()
+//        return task
+//    }
+    
+    func deleteSession(completionHandlerForDELETE: @escaping (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) -> URLSessionDataTask {
+        
+        // Make network request
+        let request = NSMutableURLRequest(url: URL(string: UdacityConstants.ApiScheme + UdacityConstants.ApiSessionUrl)!)
+        request.httpMethod = "DELETE"
+        
+        var xsrfCookie: HTTPCookie? = nil
+        let sharedCookieStorage = HTTPCookieStorage.shared
+        for cookie in sharedCookieStorage.cookies! {
+            if cookie.name == "XSRF-TOKEN" { xsrfCookie = cookie }
+        }
+        if let xsrfCookie = xsrfCookie {
+            request.setValue(xsrfCookie.value, forHTTPHeaderField: "X-XSRF-TOKEN")
+        }
+        
+        let task = sharedSession.dataTask(with: request as URLRequest) { data, response, error in
+            Utilities.shared.handleErrors(data, response, error as NSError?, completionHandler: completionHandlerForDELETE)
+            
+            // Remove first five numbers of data
+            let newData = data?.subdata(in: Range(uncheckedBounds: (5, data!.count)))
+            
+            print(NSString(data: newData!, encoding: String.Encoding.utf8.rawValue)!)
+            
+            // Parse and use the data
+            self.convertDataWithCompletionHandler(newData!, completionHandlerForConvertedData: completionHandlerForDELETE)
+        }
+        task.resume()
+        
+        return task
+    }
+    
+    private func convertDataWithCompletionHandler(_ data: Data, completionHandlerForConvertedData: (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) {
         
         // Parse the raw JSON data
         let parsedResult: AnyObject!
@@ -100,16 +141,6 @@ class UdacityClient: NSObject {
             completionHandlerForConvertedData(nil, false, "There was an error parsing the JSON")
             return
         }
-
-        completionHandlerForConvertedData(parsedResult as AnyObject?, true, nil)
+        completionHandlerForConvertedData(parsedResult as? [String:AnyObject], true, nil)
     }
-    
-    // MARK: Shared Instance
-    class func sharedInstance() -> UdacityClient {
-        struct Singleton {
-            static var sharedInstance = UdacityClient()
-        }
-        return Singleton.sharedInstance
-    }
-
 }
