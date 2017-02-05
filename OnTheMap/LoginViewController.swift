@@ -22,27 +22,25 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
     // MARK: IBActions
     
     @IBAction func loginButtonPressed(_ sender: UIButton) {
-        self.completeLogin()
-//  TEMP
-//        self.view.endEditing(true)
-//        
-//        showActivitySpinner(activityViewSpinner, style: .whiteLarge)
-//        
-//        UdacityClient.sharedInstance().authenticateUser(username: usernameTextField.text!, password: passwordTextField.text!) { (result, error) in
-//            
-//            if error != nil {
-//                DispatchQueue.main.async {
-//                    self.hideActivitySpinner(self.activityViewSpinner)
-//                }
-//                self.showAlert(error!)
-//            } else {
-//                DispatchQueue.main.async {
-//                    self.hideActivitySpinner(self.activityViewSpinner)
-//                }
-//                self.completeLogin()
-//            }
-//            
-//        }
+        
+        self.view.endEditing(true)
+        
+        showActivitySpinner(activityViewSpinner, style: .whiteLarge)
+        
+        UdacityClient.sharedInstance().authenticateUser(username: usernameTextField.text!, password: passwordTextField.text!) { (result, error) in
+            
+            if error != nil {
+                DispatchQueue.main.async {
+                    self.hideActivitySpinner(self.activityViewSpinner)
+                }
+                self.showAlert(error!)
+            } else {
+                DispatchQueue.main.async {
+                    self.hideActivitySpinner(self.activityViewSpinner)
+                }
+                self.completeLogin()
+            }
+        }
     }
     
     @IBAction func signUpLinkPressed(_ sender: UIButton) {
@@ -98,6 +96,7 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
     }
     
     func textFieldDidEndEditing(_ textField: UITextField) {
+        textField.resignFirstResponder()
         if (textField.text?.isEmpty)! {
             textField.backgroundColor = UIColor(red: 1.0, green: 1.0, blue: 1.0, alpha: 0.3)
         } else {

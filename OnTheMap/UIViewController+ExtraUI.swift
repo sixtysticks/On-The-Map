@@ -66,4 +66,13 @@ extension UIViewController {
         }
     }
     
+    func setupButton(_ button: UIButton) {
+        button.titleLabel?.font = UIFont(name: "Roboto-Medium", size: 20)
+        button.backgroundColor = setColour(alpha: 1.0)
+    }
+    
+    func setColour(alpha: CGFloat) -> UIColor {
+        return UIColor(red: 0.956, green: 0.333, blue: 0.0, alpha: alpha)
+    }
+    
 }

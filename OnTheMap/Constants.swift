@@ -14,6 +14,7 @@ struct UdacityConstants {
     static let ApiSessionUrl = "www.udacity.com/api/session"
     static let ApiUserIdUrl = "https://www.udacity.com/api/users/"
     static let SignUpUrl = "https://www.udacity.com/account/auth#!/signup"
+    static let HardcodedId = "8855238715"
 }
 
 // MARK: Parse Constants

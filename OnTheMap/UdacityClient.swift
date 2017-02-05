@@ -11,7 +11,13 @@ import Foundation
 class UdacityClient: NSObject {
 
     var sharedSession = URLSession.shared
+    
     var sessionID: String? = nil
+    
+    var userId: String? = nil
+    
+    var firstName: String? = nil
+    var lastName: String? = nil
     
     // MARK: Shared Instance
     
@@ -24,6 +30,23 @@ class UdacityClient: NSObject {
     
     // MARK: Custom model methods
     
+    func getPublicUserData(completionHandlerForPublicData: @escaping (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) -> URLSessionDataTask {
+        let request = NSMutableURLRequest(url: URL(string: "\(UdacityConstants.ApiUserIdUrl)\(UdacityConstants.HardcodedId)")!)
+        let session = URLSession.shared
+        let task = session.dataTask(with: request as URLRequest) { data, response, error in
+            if error != nil { // Handle error...
+                return
+            }
+            let range = Range(uncheckedBounds: (5, data!.count - 5))
+            let newData = data?.subdata(in: range) /* subset response data! */
+            
+            self.convertDataWithCompletionHandler(newData!, completionHandlerForConvertedData: completionHandlerForPublicData)
+        }
+        task.resume()
+        
+        return task
+    }
+    
     func authenticateUser(username: String, password: String, completionHandlerForAuth: @escaping (_ success: Bool, _ error: String?) -> Void) {
         
         let _ = createSession(UdacityConstants.ApiScheme + UdacityConstants.ApiSessionUrl, username: username, password: password) { (result, success, error) in
@@ -34,6 +57,18 @@ class UdacityClient: NSObject {
                     return
                 }
                 self.sessionID = sessionID
+                
+                let _ = self.getPublicUserData(completionHandlerForPublicData: { (result, success, error) in
+                    if error != nil {
+                        return
+                    } else {
+                        if let user = result?["user"], let firstName = user["first_name"], let lastName = user["last_name"] {
+                            self.firstName = firstName as! String?
+                            self.lastName = lastName as! String?
+                        }
+                    }
+                })
+                
                 completionHandlerForAuth(true, nil)
                 
             } else {
@@ -85,20 +120,6 @@ class UdacityClient: NSObject {
         }
     }
     
-//    func getUserData(_ userID: Int) -> URLSessionDataTask {
-//        let request = NSMutableURLRequest(url: URL(string: Constants.ApiUserIdUrl + "\(userID)")!)
-//        let session = URLSession.shared
-//        let task = session.dataTask(with: request as URLRequest) { data, response, error in
-//            if error != nil {
-//                return
-//            }
-//            let newData = data?.subdata(in: Range(uncheckedBounds: (5, data!.count)))
-//            print(NSString(data: newData!, encoding: String.Encoding.utf8.rawValue)!)
-//        }
-//        task.resume()
-//        return task
-//    }
-    
     func deleteSession(completionHandlerForDELETE: @escaping (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) -> URLSessionDataTask {
         
         // Make network request
@@ -119,8 +140,6 @@ class UdacityClient: NSObject {
             
             // Remove first five numbers of data
             let newData = data?.subdata(in: Range(uncheckedBounds: (5, data!.count)))
-            
-            print(NSString(data: newData!, encoding: String.Encoding.utf8.rawValue)!)
             
             // Parse and use the data
             self.convertDataWithCompletionHandler(newData!, completionHandlerForConvertedData: completionHandlerForDELETE)

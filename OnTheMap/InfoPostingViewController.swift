@@ -12,18 +12,37 @@ import CoreLocation
 
 class InfoPostingViewController: UIViewController, UITextFieldDelegate, MKMapViewDelegate {
     
-    @IBOutlet weak var titleLabel: UILabel!
-    @IBOutlet weak var textField: UITextField!
-    @IBOutlet weak var findButton: UIButton!
+    enum ViewOnDisplay {
+        case FormView
+        case MapView
+        case LinkView
+    }
+    
+    var posterLatitude: CLLocationDegrees? = nil
+    var posterLongitude: CLLocationDegrees? = nil
+    
+    @IBOutlet weak var formTitleLabel: UILabel!
+    @IBOutlet weak var formTextField: UITextField!
+    @IBOutlet weak var formFindButton: UIButton!
     @IBOutlet weak var formView: UIView!
+    
+    @IBOutlet weak var mapTitleLabel: UILabel!
     @IBOutlet weak var mapView: MKMapView!
-    @IBOutlet weak var mapElements: UIView!
+    @IBOutlet weak var mapViewButton: UIButton!
+    @IBOutlet weak var mapWrapperView: UIView!
+    
+    @IBOutlet weak var linkTitleLabel: UILabel!
+    @IBOutlet weak var linkViewTextField: UITextField!
+    @IBOutlet weak var linkViewButton: UIButton!
+    @IBOutlet weak var linkView: UIView!
     
     @IBAction func findButtonPressed(_ sender: UIButton) {
         
+        self.view.endEditing(true)
+        
         let geocoder = CLGeocoder()
         
-        guard let place = textField.text else {
+        guard let place = formTextField.text else {
             self.showAlert("Please enter a location")
             return
         }
@@ -33,8 +52,7 @@ class InfoPostingViewController: UIViewController, UITextFieldDelegate, MKMapVie
             if error != nil {
                 self.showAlert("Can't find location")
             } else {
-                self.mapElements.isHidden = false
-                self.formView.isHidden = true
+                self.displayView(.MapView)
                 // Add spinner
                 
                 let placemark = placemarks?.first
@@ -43,59 +61,81 @@ class InfoPostingViewController: UIViewController, UITextFieldDelegate, MKMapVie
                     let coordinate = placemark.location?.coordinate
                     print("Latitude: \(coordinate?.latitude) // Longitude: \(coordinate?.longitude)")
                     
+                    let span = MKCoordinateSpanMake(0.05, 0.05)
+                    let region = MKCoordinateRegion(center: coordinate!, span: span)
+                    
                     let annotation = MKPointAnnotation()
 
                     annotation.coordinate = coordinate!
                     
+                    self.posterLatitude = coordinate?.latitude
+                    self.posterLongitude = coordinate?.longitude
+                    
                     DispatchQueue.main.async {
                         self.mapView.removeAnnotation(annotation)
                         self.mapView.addAnnotation(annotation)
+                        self.mapView.setRegion(region, animated: true)
                     }
-
                     
                 } else {
-                    self.showAlert("No matches")
+                    self.showAlert("No matches for that location")
                 }
-                
             }
-            
-            
-            
         }
     }
     
     @IBAction func placePinButtonPressed(_ sender: UIButton) {
-        // Add code
+        self.displayView(.LinkView)
+    }
+    
+    @IBAction func linkViewButtonPressed(_ sender: UIButton) {
+        ParseClient.sharedInstance().postStudentLocation(mapString: formTextField.text!, mediaUrl: linkViewTextField.text, latitude: posterLatitude!, longitude: posterLongitude!)
+    }
+    
+    @IBAction func cancelButtonPressed(_ sender: UIButton) {
         dismiss(animated: true, completion: nil)
     }
     
-    @IBAction func cancelPressed(_ sender: UIButton) {
-        dismiss(animated: true, completion: nil)
+    func displayView(_ viewToDisplay: ViewOnDisplay) {
+        switch viewToDisplay {
+        case .FormView:
+            formView.isHidden = false
+            mapWrapperView.isHidden = true
+            linkView.isHidden = true
+        case .MapView:
+            formView.isHidden = true
+            mapWrapperView.isHidden = false
+            linkView.isHidden = true
+        case .LinkView:
+            formView.isHidden = true
+            mapWrapperView.isHidden = true
+            linkView.isHidden = false
+        }
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        mapElements.isHidden = true
+        self.displayView(.FormView)
         
-        // Form Background
-        self.view.backgroundColor = setColour(alpha: 1.0)
-        setUpBackground(formView)
+        // Set up Background
+        setUpBackground(self.view)
         
-        // Title
-        titleLabel.font = UIFont(name: "Roboto-Medium", size: 26)
+        // Set up title styles
+        let font = UIFont(name: "Roboto-Medium", size: 24)
+        formTitleLabel.font = font
+        mapTitleLabel.font = font
+        linkViewTextField.font = font
         
-        // Textfields
-        setupTextField(self, textField, hasPadding: false)
+        // Set up textfields
+        setupTextField(self, formTextField, hasPadding: false)
+        setupTextField(self, linkViewTextField, hasPadding: false)
         
-        // Login Button
-        findButton.titleLabel?.font = UIFont(name: "Roboto-Medium", size: 20)
-        findButton.backgroundColor = setColour(alpha: 1.0)
+        // Set up buttons
+        setupButton(formFindButton)
+        setupButton(mapViewButton)
+        setupButton(linkViewButton)
         
-    }
-    
-    func setColour(alpha: CGFloat) -> UIColor {
-        return UIColor(red: 0.956, green: 0.333, blue: 0.0, alpha: alpha)
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
@@ -108,6 +148,7 @@ class InfoPostingViewController: UIViewController, UITextFieldDelegate, MKMapVie
     }
     
     func textFieldDidEndEditing(_ textField: UITextField) {
+        textField.resignFirstResponder()
         if (textField.text?.isEmpty)! {
             textField.backgroundColor = setColour(alpha: 0.3)
         } else {
