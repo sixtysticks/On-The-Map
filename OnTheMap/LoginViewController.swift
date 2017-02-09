@@ -37,8 +37,8 @@ class LoginViewController: UIViewController, UITextFieldDelegate {
             } else {
                 DispatchQueue.main.async {
                     self.hideActivitySpinner(self.activityViewSpinner)
+                    self.completeLogin()
                 }
-                self.completeLogin()
             }
         }
     }

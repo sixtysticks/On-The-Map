@@ -10,14 +10,12 @@ import Foundation
 
 class UdacityClient: NSObject {
 
-    var sharedSession = URLSession.shared
+    static var sharedSession = URLSession.shared
     
-    var sessionID: String? = nil
-    
-    var userId: String? = nil
-    
-    var firstName: String? = nil
-    var lastName: String? = nil
+    static var sessionID: String? = nil
+    static var accountID: String? = nil
+    static var firstName: String? = nil
+    static var lastName: String? = nil
     
     // MARK: Shared Instance
     
@@ -30,23 +28,6 @@ class UdacityClient: NSObject {
     
     // MARK: Custom model methods
     
-    func getPublicUserData(completionHandlerForPublicData: @escaping (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) -> URLSessionDataTask {
-        let request = NSMutableURLRequest(url: URL(string: "\(UdacityConstants.ApiUserIdUrl)\(UdacityConstants.HardcodedId)")!)
-        let session = URLSession.shared
-        let task = session.dataTask(with: request as URLRequest) { data, response, error in
-            if error != nil { // Handle error...
-                return
-            }
-            let range = Range(uncheckedBounds: (5, data!.count - 5))
-            let newData = data?.subdata(in: range) /* subset response data! */
-            
-            self.convertDataWithCompletionHandler(newData!, completionHandlerForConvertedData: completionHandlerForPublicData)
-        }
-        task.resume()
-        
-        return task
-    }
-    
     func authenticateUser(username: String, password: String, completionHandlerForAuth: @escaping (_ success: Bool, _ error: String?) -> Void) {
         
         let _ = createSession(UdacityConstants.ApiScheme + UdacityConstants.ApiSessionUrl, username: username, password: password) { (result, success, error) in
@@ -56,18 +37,31 @@ class UdacityClient: NSObject {
                     print("Error getting session from result")
                     return
                 }
-                self.sessionID = sessionID
+                
+                guard let account = result?["account"], let accountID = account["key"] as? String else {
+                    print("Error getting account id from result")
+                    return
+                }
+                
+                UdacityClient.sessionID = sessionID
+                UdacityClient.accountID = accountID
                 
                 let _ = self.getPublicUserData(completionHandlerForPublicData: { (result, success, error) in
-                    if error != nil {
+                    
+                    guard let user = result?["user"] else {
+                        print("Error getting user from result")
                         return
-                    } else {
-                        if let user = result?["user"], let firstName = user["first_name"], let lastName = user["last_name"] {
-                            self.firstName = firstName as! String?
-                            self.lastName = lastName as! String?
-                        }
                     }
+                    
+                    guard let firstName = user["first_name"] as? String, let lastName = user["last_name"] as? String else {
+                        print("Error getting name from result")
+                        return
+                    }
+                    
+                    UdacityClient.firstName = firstName as String?
+                    UdacityClient.lastName = lastName as String?
                 })
+                
                 
                 completionHandlerForAuth(true, nil)
                 
@@ -75,6 +69,25 @@ class UdacityClient: NSObject {
                 completionHandlerForAuth(false, error)
             }
         }
+    }
+    
+    func getPublicUserData(completionHandlerForPublicData: @escaping (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) {
+        
+        let request = NSMutableURLRequest(url: URL(string: "\(UdacityConstants.ApiUserIdUrl)\(UdacityClient.accountID!)")!)
+        
+        let task = UdacityClient.sharedSession.dataTask(with: request as URLRequest) { data, response, error in
+            
+            Utilities.shared.handleErrors(data, response, error as NSError?, completionHandler: completionHandlerForPublicData)
+            
+            // Remove first five numbers of data
+            let newData = data?.subdata(in: Range(uncheckedBounds: (5, data!.count)))
+            
+            // print("NEW_DATA: \(NSString(data: newData!, encoding: String.Encoding.utf8.rawValue)!)")
+            
+            // Parse and use the data
+            self.convertDataWithCompletionHandler(newData!, completionHandlerForConvertedData: completionHandlerForPublicData)
+        }
+        task.resume()
     }
     
     func createSession(_ url_path: String, username: String, password: String, completionHandlerForPOST: @escaping (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) -> URLSessionDataTask {
@@ -88,7 +101,7 @@ class UdacityClient: NSObject {
         request.httpBody = "{\"udacity\": {\"username\": \"\(username)\", \"password\": \"\(password)\"}}".data(using: String.Encoding.utf8)
         
         // Create a session ID
-        let task = sharedSession.dataTask(with: request as URLRequest) { data, response, error in
+        let task = UdacityClient.sharedSession.dataTask(with: request as URLRequest) { data, response, error in
             
             Utilities.shared.handleErrors(data, response, error as NSError?, completionHandler: completionHandlerForPOST)
             
@@ -135,7 +148,8 @@ class UdacityClient: NSObject {
             request.setValue(xsrfCookie.value, forHTTPHeaderField: "X-XSRF-TOKEN")
         }
         
-        let task = sharedSession.dataTask(with: request as URLRequest) { data, response, error in
+        let task = UdacityClient.sharedSession.dataTask(with: request as URLRequest) { data, response, error in
+            
             Utilities.shared.handleErrors(data, response, error as NSError?, completionHandler: completionHandlerForDELETE)
             
             // Remove first five numbers of data

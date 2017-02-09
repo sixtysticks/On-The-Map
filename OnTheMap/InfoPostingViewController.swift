@@ -89,7 +89,26 @@ class InfoPostingViewController: UIViewController, UITextFieldDelegate, MKMapVie
     }
     
     @IBAction func linkViewButtonPressed(_ sender: UIButton) {
-        ParseClient.sharedInstance().postStudentLocation(mapString: formTextField.text!, mediaUrl: linkViewTextField.text, latitude: posterLatitude!, longitude: posterLongitude!)
+        
+        print("formTextField.text! : \(formTextField.text!)")
+        print("linkViewTextField.text! : \(linkViewTextField.text!)")
+        print("posterLatitude! : \(posterLatitude!)")
+        print("posterLongitude! : \(posterLongitude!)")
+        
+        let _ = ParseClient.sharedInstance().postStudentLocation(mapString: formTextField.text!, mediaUrl: linkViewTextField.text!, latitude: posterLatitude!, longitude: posterLongitude!) { (result, success, error) in
+            
+            guard let _ = error else {
+                self.showAlert("Error! Please try entering the url again")
+                return
+            }
+            
+            DispatchQueue.main.async {
+                self.dismiss(animated: true, completion: {
+                    print("COMPLETED!")
+                })
+            }
+        }
+
     }
     
     @IBAction func cancelButtonPressed(_ sender: UIButton) {
