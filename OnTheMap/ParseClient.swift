@@ -21,16 +21,48 @@ class ParseClient: NSObject {
         return Singleton.sharedInstance
     }
     
-    func postStudentLocation(mapString: String, mediaUrl: String, latitude: Double, longitude: Double, completionHandlerForPostLocation: @escaping (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) -> URLSessionDataTask {
+    func getStudentLocations(completionHandlerForGetLocations: @escaping (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) {
+        
+        let request = NSMutableURLRequest(url: URL(string: "\(ParseConstants.ApiUrl)/\(ParseConstants.StudentLocation)\(ParseConstants.Limit)")!)
+        request.addValue(ParseConstants.AppId, forHTTPHeaderField: "X-Parse-Application-Id")
+        request.addValue(ParseConstants.ApiKey, forHTTPHeaderField: "X-Parse-REST-API-Key")
+        
+        let session = UdacityClient.sharedSession
+        
+        let task = session.dataTask(with: request as URLRequest) { data, response, error in
+            
+            Utilities.shared.handleErrors(data, response, error as NSError?, completionHandler: completionHandlerForGetLocations)
+            
+            self.parseData(data!, completionHandlerForConvertedData: completionHandlerForGetLocations)
+            
+        }
+        task.resume()
+    }
+    
+    func postStudentLocation(mapString: String, mediaUrl: String, latitude: Double, longitude: Double, completionHandlerForPostLocation: @escaping (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) {
         
         let request = NSMutableURLRequest(url: URL(string: "\(ParseConstants.ApiUrl)/\(ParseConstants.StudentLocation)")!)
         request.httpMethod = "POST"
         request.addValue(ParseConstants.AppId, forHTTPHeaderField: "X-Parse-Application-Id")
         request.addValue(ParseConstants.ApiKey, forHTTPHeaderField: "X-Parse-REST-API-Key")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = "{\"uniqueKey\": \"\(UdacityClient.accountID!)\", \"firstName\": \"\(UdacityClient.firstName)\", \"lastName\": \"\(UdacityClient.lastName)\",\"mapString\": \"\(mapString)\", \"mediaURL\": \"\(mediaUrl)\",\"latitude\": \(latitude), \"longitude\": \(longitude)}".data(using: String.Encoding.utf8)
         
-        let task = UdacityClient.sharedSession.dataTask(with: request as URLRequest) { data, response, error in
+        let jsonDict: [String:Any] = [
+            "uniqueKey": UdacityClient.accountID!,
+            "firstName": UdacityClient.firstName!,
+            "lastname": UdacityClient.lastName!,
+            "mapString": mapString,
+            "mediaURL": mediaUrl,
+            "latitude": latitude,
+            "longitude": longitude
+        ]
+        
+        let jsonData = try! JSONSerialization.data(withJSONObject: jsonDict, options: .prettyPrinted)
+        request.httpBody = jsonData
+        
+        let session = UdacityClient.sharedSession
+        
+        let task = session.dataTask(with: request as URLRequest) { data, response, error in
             
             Utilities.shared.handleErrors(data, response, error as NSError?, completionHandler: completionHandlerForPostLocation)
             
@@ -39,8 +71,6 @@ class ParseClient: NSObject {
 
         }
         task.resume()
-        
-        return task
     }
     
     func displayAnnotations(_ completionHandlerForAnnotations: @escaping (_ result: [StudentLocation]?, _ success: Bool, _ error: String?) -> Void) {
@@ -59,25 +89,6 @@ class ParseClient: NSObject {
                 completionHandlerForAnnotations(nil, false, error)
             }
         }
-    }
-    
-    func getStudentLocations(completionHandlerForGetLocations: @escaping (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) {
-        
-        let request = NSMutableURLRequest(url: URL(string: "\(ParseConstants.ApiUrl)/\(ParseConstants.StudentLocation)\(ParseConstants.Limit)")!)
-        request.addValue(ParseConstants.AppId, forHTTPHeaderField: "X-Parse-Application-Id")
-        request.addValue(ParseConstants.ApiKey, forHTTPHeaderField: "X-Parse-REST-API-Key")
-        
-        let session = UdacityClient.sharedSession
-        
-        let task = session.dataTask(with: request as URLRequest) { data, response, error in
-            
-            Utilities.shared.handleErrors(data, response, error as NSError?, completionHandler: completionHandlerForGetLocations)
-            
-            self.parseData(data!, completionHandlerForConvertedData: completionHandlerForGetLocations)
-            
-        }
-        task.resume()
-        
     }
     
     func parseData(_ data: Data, completionHandlerForConvertedData: (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) {

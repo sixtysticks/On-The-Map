@@ -16,7 +16,6 @@ struct StudentLocation {
     var longitude: Double?
     var mapString: String?
     var mediaURL: String?
-    var objectId: String?
     var uniqueKey: String?
     
     init(dictionary: [String:AnyObject]) {
@@ -26,7 +25,6 @@ struct StudentLocation {
         self.longitude = dictionary["longitude"] as? Double
         self.mapString = dictionary["mapString"] as? String
         self.mediaURL = dictionary["mediaURL"]  as? String
-        self.objectId = dictionary["objectId"]  as? String
         self.uniqueKey = dictionary["uniqueKey"] as? String
     }
     

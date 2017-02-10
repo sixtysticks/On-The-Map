@@ -46,6 +46,8 @@ class UdacityClient: NSObject {
                 UdacityClient.sessionID = sessionID
                 UdacityClient.accountID = accountID
                 
+                print("SESSION ID, BRAH: \(sessionID)")
+                
                 let _ = self.getPublicUserData(completionHandlerForPublicData: { (result, success, error) in
                     
                     guard let user = result?["user"] else {
@@ -82,8 +84,6 @@ class UdacityClient: NSObject {
             // Remove first five numbers of data
             let newData = data?.subdata(in: Range(uncheckedBounds: (5, data!.count)))
             
-            // print("NEW_DATA: \(NSString(data: newData!, encoding: String.Encoding.utf8.rawValue)!)")
-            
             // Parse and use the data
             self.convertDataWithCompletionHandler(newData!, completionHandlerForConvertedData: completionHandlerForPublicData)
         }
@@ -98,7 +98,18 @@ class UdacityClient: NSObject {
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Accept")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = "{\"udacity\": {\"username\": \"\(username)\", \"password\": \"\(password)\"}}".data(using: String.Encoding.utf8)
+        
+        let jsonDict: [String: Any] = [
+            "udacity": [
+                "username": username,
+                "password": password
+            ]
+        ]
+        
+        let jsonData = try! JSONSerialization.data(withJSONObject: jsonDict, options: .prettyPrinted)
+        request.httpBody = jsonData
+        
+//        request.httpBody = "{\"udacity\": {\"username\": \"\(username)\", \"password\": \"\(password)\"}}".data(using: String.Encoding.utf8)
         
         // Create a session ID
         let task = UdacityClient.sharedSession.dataTask(with: request as URLRequest) { data, response, error in

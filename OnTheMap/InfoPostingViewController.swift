@@ -59,7 +59,6 @@ class InfoPostingViewController: UIViewController, UITextFieldDelegate, MKMapVie
                 
                 if let placemark = placemark {
                     let coordinate = placemark.location?.coordinate
-                    print("Latitude: \(coordinate?.latitude) // Longitude: \(coordinate?.longitude)")
                     
                     let span = MKCoordinateSpanMake(0.05, 0.05)
                     let region = MKCoordinateRegion(center: coordinate!, span: span)
@@ -90,25 +89,23 @@ class InfoPostingViewController: UIViewController, UITextFieldDelegate, MKMapVie
     
     @IBAction func linkViewButtonPressed(_ sender: UIButton) {
         
-        print("formTextField.text! : \(formTextField.text!)")
-        print("linkViewTextField.text! : \(linkViewTextField.text!)")
-        print("posterLatitude! : \(posterLatitude!)")
-        print("posterLongitude! : \(posterLongitude!)")
-        
         let _ = ParseClient.sharedInstance().postStudentLocation(mapString: formTextField.text!, mediaUrl: linkViewTextField.text!, latitude: posterLatitude!, longitude: posterLongitude!) { (result, success, error) in
             
-            guard let _ = error else {
-                self.showAlert("Error! Please try entering the url again")
-                return
-            }
-            
-            DispatchQueue.main.async {
-                self.dismiss(animated: true, completion: {
-                    print("COMPLETED!")
-                })
+            if success {
+                guard let _ = result else {
+                    self.showAlert("Error! Please try entering the url again")
+                    return
+                }
+                
+                DispatchQueue.main.async {
+                    self.dismiss(animated: true, completion: {
+                        print("COMPLETED!")
+                    })
+                }
+            } else {
+                print("FELL AT THE LAST HURDLE")
             }
         }
-
     }
     
     @IBAction func cancelButtonPressed(_ sender: UIButton) {
