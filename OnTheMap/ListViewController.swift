@@ -34,6 +34,17 @@ class ListViewController: UIViewController, UITableViewDataSource, UITableViewDe
         }
     }
 
+    @IBAction func refreshButtonPressed(_ sender: UIBarButtonItem) {
+        
+        showActivitySpinner(activityViewSpinner, style: .gray)
+        
+        DispatchQueue.main.async {
+            self.hideActivitySpinner(self.activityViewSpinner)
+//            self.studentTableView.reloadData()
+            self.fetchLocations()
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -44,27 +55,16 @@ class ListViewController: UIViewController, UITableViewDataSource, UITableViewDe
     
     func fetchLocations() {
         
-        let studentLocations = ParseClient.sharedInstance()
-        
         showActivitySpinner(activityViewSpinner, style: .gray)
         
-        if studentLocations.locationsFetched {
-            self.locations = studentLocations.locations
-            
-            DispatchQueue.main.async {
-                self.hideActivitySpinner(self.activityViewSpinner)
-                self.studentTableView.reloadData()
-            }
-        } else {
-            ParseClient.sharedInstance().getStudentLocations(completionHandlerForGetLocations: { (results, success, error) in
-                if success {
-                    DispatchQueue.main.async {
-                        self.hideActivitySpinner(self.activityViewSpinner)
-                        self.studentTableView.reloadData()
-                    }
+        ParseClient.sharedInstance().getStudentLocations(completionHandlerForGetLocations: { (results, success, error) in
+            if success {
+                DispatchQueue.main.async {
+                    self.hideActivitySpinner(self.activityViewSpinner)
+                    self.studentTableView.reloadData()
                 }
-            })
-        }
+            }
+        })
     }
     
     // MARK: Table View Data Source
@@ -106,7 +106,6 @@ class ListViewController: UIViewController, UITableViewDataSource, UITableViewDe
         
         let app = UIApplication.shared
         let mediaUrl = ParseClient.sharedInstance().locations[indexPath.row].mediaURL
-        print("\(mediaUrl)")
         
         if let toOpen = mediaUrl {
             if canVerifyUrl(urlString: toOpen) {

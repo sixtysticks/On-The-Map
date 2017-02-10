@@ -12,13 +12,13 @@ class UdacityClient: NSObject {
 
     static var sharedSession = URLSession.shared
     
+    // MARK: Stored variables
     static var sessionID: String? = nil
     static var accountID: String? = nil
     static var firstName: String? = nil
     static var lastName: String? = nil
     
     // MARK: Shared Instance
-    
     class func sharedInstance() -> UdacityClient {
         struct Singleton {
             static var sharedInstance = UdacityClient()
@@ -26,8 +26,7 @@ class UdacityClient: NSObject {
         return Singleton.sharedInstance
     }
     
-    // MARK: Custom model methods
-    
+    // MARK: User authentication on login
     func authenticateUser(username: String, password: String, completionHandlerForAuth: @escaping (_ success: Bool, _ error: String?) -> Void) {
         
         let _ = createSession(UdacityConstants.ApiScheme + UdacityConstants.ApiSessionUrl, username: username, password: password) { (result, success, error) in
@@ -43,11 +42,10 @@ class UdacityClient: NSObject {
                     return
                 }
                 
+                // Store the IDs
                 UdacityClient.sessionID = sessionID
                 UdacityClient.accountID = accountID
-                
-                print("SESSION ID, BRAH: \(sessionID)")
-                
+                                
                 let _ = self.getPublicUserData(completionHandlerForPublicData: { (result, success, error) in
                     
                     guard let user = result?["user"] else {
@@ -60,10 +58,10 @@ class UdacityClient: NSObject {
                         return
                     }
                     
+                    // Store the user's name for later use
                     UdacityClient.firstName = firstName as String?
                     UdacityClient.lastName = lastName as String?
                 })
-                
                 
                 completionHandlerForAuth(true, nil)
                 
@@ -73,6 +71,7 @@ class UdacityClient: NSObject {
         }
     }
     
+    // MARK: Get the user data needed to post to the app
     func getPublicUserData(completionHandlerForPublicData: @escaping (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) {
         
         let request = NSMutableURLRequest(url: URL(string: "\(UdacityConstants.ApiUserIdUrl)\(UdacityClient.accountID!)")!)
@@ -90,9 +89,8 @@ class UdacityClient: NSObject {
         task.resume()
     }
     
+    // MARK: Create a session in which to use the app
     func createSession(_ url_path: String, username: String, password: String, completionHandlerForPOST: @escaping (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) -> URLSessionDataTask {
-        
-        // Make network request
         
         let request = NSMutableURLRequest(url: URL(string: url_path)!)
         request.httpMethod = "POST"
@@ -109,9 +107,6 @@ class UdacityClient: NSObject {
         let jsonData = try! JSONSerialization.data(withJSONObject: jsonDict, options: .prettyPrinted)
         request.httpBody = jsonData
         
-//        request.httpBody = "{\"udacity\": {\"username\": \"\(username)\", \"password\": \"\(password)\"}}".data(using: String.Encoding.utf8)
-        
-        // Create a session ID
         let task = UdacityClient.sharedSession.dataTask(with: request as URLRequest) { data, response, error in
             
             Utilities.shared.handleErrors(data, response, error as NSError?, completionHandler: completionHandlerForPOST)
@@ -128,15 +123,10 @@ class UdacityClient: NSObject {
         return task
     }
     
+    // MARK: Destroy the session on logout
     func endUserSession(completionHandlerForDeleteSession: @escaping (_ success: Bool, _ error: String?) -> Void) {
         let _ = deleteSession { (result, success, error) in
             if success {
-                guard let session = result?["session"], let id = session["id"] else {
-                    print("Error deleting session")
-                    return
-                }
-                
-                print("session_id: \(id)")
                 completionHandlerForDeleteSession(true, nil)
             } else {
                 completionHandlerForDeleteSession(false, error)
@@ -174,6 +164,7 @@ class UdacityClient: NSObject {
         return task
     }
     
+    // MARK: Parse the raw JSON data accordingly
     private func convertDataWithCompletionHandler(_ data: Data, completionHandlerForConvertedData: (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) {
         
         // Parse the raw JSON data

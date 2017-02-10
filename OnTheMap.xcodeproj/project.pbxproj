@@ -79,7 +79,6 @@
 			isa = PBXGroup;
 			children = (
 				26104EF91E1C3A4D00ECCB6C /* Model */,
-				26104EFA1E1C3A5B00ECCB6C /* View */,
 				26104EFB1E1C3A6300ECCB6C /* Controller */,
 				266256D01E2BF1AA00BE848C /* Extensions */,
 				26104EFC1E1C3A7500ECCB6C /* Assets */,
@@ -96,13 +95,6 @@
 				26104EFE1E1CFAD800ECCB6C /* Clients */,
 			);
 			name = Model;
-			sourceTree = "<group>";
-		};
-		26104EFA1E1C3A5B00ECCB6C /* View */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			name = View;
 			sourceTree = "<group>";
 		};
 		26104EFB1E1C3A6300ECCB6C /* Controller */ = {

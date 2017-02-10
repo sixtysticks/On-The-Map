@@ -93,17 +93,13 @@ class InfoPostingViewController: UIViewController, UITextFieldDelegate, MKMapVie
             
             if success {
                 guard let _ = result else {
-                    self.showAlert("Error! Please try entering the url again")
+                    self.showAlert("Error!")
                     return
                 }
                 
                 DispatchQueue.main.async {
-                    self.dismiss(animated: true, completion: {
-                        print("COMPLETED!")
-                    })
+                    self.dismiss(animated: true, completion: nil)
                 }
-            } else {
-                print("FELL AT THE LAST HURDLE")
             }
         }
     }

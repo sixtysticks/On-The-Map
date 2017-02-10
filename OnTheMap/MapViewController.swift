@@ -18,10 +18,9 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     
     @IBAction func logoutButtonPressed(_ sender: UIBarButtonItem) {
         
-        showActivitySpinner(activityViewSpinner, style: .whiteLarge)
+        showActivitySpinner(activityViewSpinner, style: .gray)
         
         UdacityClient.sharedInstance().endUserSession { (success, error) in
-            
             if success {
                 self.tabBarController?.dismiss(animated: true, completion: nil)
             } else {
@@ -36,7 +35,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     @IBAction func refreshButtonPressed(_ sender: UIBarButtonItem) {
         
         DispatchQueue.main.async {
-            self.showActivitySpinner(self.activityViewSpinner, style: .whiteLarge)
+            self.showActivitySpinner(self.activityViewSpinner, style: .gray)
             self.populateMap()
         }
         
@@ -44,12 +43,11 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     
     func populateMap() {
         
-        showActivitySpinner(activityViewSpinner, style: .whiteLarge)
+        showActivitySpinner(activityViewSpinner, style: .gray)
         
         ParseClient.sharedInstance().displayAnnotations() { (locations, success, error) in
             
             if success {
-                
                 for location in locations! {
                     if let lat = location.latitude, let long = location.longitude,
                         let firstName = location.firstName, let lastName = location.lastName,
@@ -129,7 +127,4 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             }
         }
     }
-    
-    
-    
 }
