@@ -31,43 +31,39 @@ class UdacityClient: NSObject {
         
         let _ = createSession(UdacityConstants.ApiScheme + UdacityConstants.ApiSessionUrl, username: username, password: password) { (result, success, error) in
             
-            if success {
-                guard let session = result?["session"], let sessionID = session["id"] as? String else {
-                    print("Error getting session from result")
-                    return
-                }
-                
-                guard let account = result?["account"], let accountID = account["key"] as? String else {
-                    print("Error getting account id from result")
-                    return
-                }
-                
-                // Store the IDs
-                UdacityClient.sessionID = sessionID
-                UdacityClient.accountID = accountID
-                                
-                let _ = self.getPublicUserData(completionHandlerForPublicData: { (result, success, error) in
-                    
-                    guard let user = result?["user"] else {
-                        print("Error getting user from result")
-                        return
-                    }
-                    
-                    guard let firstName = user["first_name"] as? String, let lastName = user["last_name"] as? String else {
-                        print("Error getting name from result")
-                        return
-                    }
-                    
-                    // Store the user's name for later use
-                    UdacityClient.firstName = firstName as String?
-                    UdacityClient.lastName = lastName as String?
-                })
-                
-                completionHandlerForAuth(true, nil)
-                
-            } else {
-                completionHandlerForAuth(false, error)
+            guard let _ = result else {
+                completionHandlerForAuth(false, UdacityConstants.NetworkProblems)
+                return
             }
+            
+            guard let session = result?["session"], let sessionID = session["id"] as? String, let account = result?["account"], let accountID = account["key"] as? String else {
+                print("Error getting session from result")
+                completionHandlerForAuth(false, UdacityConstants.IncorrectDetails)
+                return
+            }
+            
+            // Store the IDs
+            UdacityClient.sessionID = sessionID
+            UdacityClient.accountID = accountID
+            
+            let _ = self.getPublicUserData(completionHandlerForPublicData: { (result, success, error) in
+                
+                guard let user = result?["user"] else {
+                    print("Error getting user from result")
+                    return
+                }
+                
+                guard let firstName = user["first_name"] as? String, let lastName = user["last_name"] as? String else {
+                    print("Error getting name from result")
+                    return
+                }
+                
+                // Store the user's name for later use
+                UdacityClient.firstName = firstName as String?
+                UdacityClient.lastName = lastName as String?
+            })
+            
+            completionHandlerForAuth(true, nil)
         }
     }
     
@@ -109,7 +105,10 @@ class UdacityClient: NSObject {
         
         let task = UdacityClient.sharedSession.dataTask(with: request as URLRequest) { data, response, error in
             
-            Utilities.shared.handleErrors(data, response, error as NSError?, completionHandler: completionHandlerForPOST)
+            guard let _ = data else {
+                Utilities.shared.handleErrors(data, response, error as NSError?, completionHandler: completionHandlerForPOST)
+                return
+            }
             
             // Remove first five numbers of data
             let newData = data?.subdata(in: Range(uncheckedBounds: (5, data!.count)))

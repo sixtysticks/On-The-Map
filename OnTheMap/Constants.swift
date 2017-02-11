@@ -14,6 +14,9 @@ struct UdacityConstants {
     static let ApiSessionUrl = "www.udacity.com/api/session"
     static let ApiUserIdUrl = "https://www.udacity.com/api/users/"
     static let SignUpUrl = "https://www.udacity.com/account/auth#!/signup"
+    static let NetworkProblems = "You are not connected to a network. Please check your network settings and try again."
+    static let IncorrectDetails = "You have entered incorrect details. Please enter your username and password again."
+    static let NoData = "No data was returned by the request"
 }
 
 // MARK: Parse Constants

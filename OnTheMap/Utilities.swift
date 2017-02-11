@@ -14,18 +14,19 @@ final class Utilities {
     func handleErrors(_ data: Data?, _ response: URLResponse?, _ error: NSError?, completionHandler: @escaping (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) {
         
         guard (error == nil) else {
-            completionHandler(nil, false, "There was an error with your request")
+            completionHandler(nil, false, UdacityConstants.NetworkProblems)
             return
         }
         
         guard let statusCode = (response as? HTTPURLResponse)?.statusCode, statusCode >= 200 && statusCode <= 299 else {
-            completionHandler(nil, false, "Your request returned an invalid status code other than 2xx")
+            completionHandler(nil, false, UdacityConstants.IncorrectDetails)
             return
         }
         
         guard let _ = data else {
-            completionHandler(nil, false, "No data was returned by the request")
+            completionHandler(nil, false, UdacityConstants.NoData)
             return
         }
     }
+
 }
