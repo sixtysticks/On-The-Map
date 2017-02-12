@@ -36,9 +36,13 @@ class InfoPostingViewController: UIViewController, UITextFieldDelegate, MKMapVie
     @IBOutlet weak var linkViewButton: UIButton!
     @IBOutlet weak var linkView: UIView!
     
+    @IBOutlet weak var activityViewSpinner: UIActivityIndicatorView!
+
     @IBAction func findButtonPressed(_ sender: UIButton) {
         
         self.view.endEditing(true)
+        
+        showActivitySpinner(self.activityViewSpinner, style: .whiteLarge)
         
         let geocoder = CLGeocoder()
         
@@ -53,7 +57,6 @@ class InfoPostingViewController: UIViewController, UITextFieldDelegate, MKMapVie
                 self.showAlert("Can't find location")
             } else {
                 self.displayView(.MapView)
-                // Add spinner
                 
                 let placemark = placemarks?.first
                 
@@ -74,12 +77,15 @@ class InfoPostingViewController: UIViewController, UITextFieldDelegate, MKMapVie
                         self.mapView.removeAnnotation(annotation)
                         self.mapView.addAnnotation(annotation)
                         self.mapView.setRegion(region, animated: true)
+                        self.hideActivitySpinner(self.activityViewSpinner)
                     }
                     
                 } else {
                     self.showAlert("No matches for that location")
                 }
             }
+            
+            
         }
     }
     
@@ -88,6 +94,8 @@ class InfoPostingViewController: UIViewController, UITextFieldDelegate, MKMapVie
     }
     
     @IBAction func linkViewButtonPressed(_ sender: UIButton) {
+        
+        showActivitySpinner(self.activityViewSpinner, style: .whiteLarge)
         
         let _ = ParseClient.sharedInstance().postStudentLocation(mapString: formTextField.text!, mediaUrl: linkViewTextField.text!, latitude: posterLatitude!, longitude: posterLongitude!) { (result, success, error) in
             
@@ -99,6 +107,7 @@ class InfoPostingViewController: UIViewController, UITextFieldDelegate, MKMapVie
                 
                 DispatchQueue.main.async {
                     self.dismiss(animated: true, completion: nil)
+                    self.hideActivitySpinner(self.activityViewSpinner)
                 }
             }
         }
@@ -127,6 +136,8 @@ class InfoPostingViewController: UIViewController, UITextFieldDelegate, MKMapVie
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        activityViewSpinner.isHidden = true
         
         self.displayView(.FormView)
         
