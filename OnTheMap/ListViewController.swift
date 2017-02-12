@@ -10,7 +10,7 @@ import UIKit
 
 class ListViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
     
-    var locations = [StudentLocation]()
+//    var locations = [StudentLocation]()
     
     @IBOutlet weak var studentTableView: UITableView!
     
@@ -36,47 +36,53 @@ class ListViewController: UIViewController, UITableViewDataSource, UITableViewDe
 
     @IBAction func refreshButtonPressed(_ sender: UIBarButtonItem) {
         
-        showActivitySpinner(activityViewSpinner, style: .gray)
+        showActivitySpinner(self.activityViewSpinner, style: .gray)
+        
+        self.studentTableView.reloadData()
         
         DispatchQueue.main.async {
+            
             self.hideActivitySpinner(self.activityViewSpinner)
-//            self.studentTableView.reloadData()
-            self.fetchLocations()
         }
+        print("REFRESH: \(StudentLocation.studentLocations)")
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        activityViewSpinner.isHidden = true
+        showActivitySpinner(self.activityViewSpinner, style: .gray)
         
-        fetchLocations()
+        DispatchQueue.main.async {
+            self.fetchLocations()
+            self.hideActivitySpinner(self.activityViewSpinner)
+        }
+        print("VIEWDIDLOAD: \(StudentLocation.studentLocations)")
     }
     
+
     func fetchLocations() {
+        self.showActivitySpinner(self.activityViewSpinner, style: .gray)
         
-        showActivitySpinner(activityViewSpinner, style: .gray)
-        
-        ParseClient.sharedInstance().getStudentLocations(completionHandlerForGetLocations: { (results, success, error) in
+        ParseClient.sharedInstance().displayStudentLocations { (locations, success, error) in
             if success {
+                
                 DispatchQueue.main.async {
                     self.hideActivitySpinner(self.activityViewSpinner)
-                    self.studentTableView.reloadData()
                 }
             }
-        })
+        }
     }
     
     // MARK: Table View Data Source
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return ParseClient.sharedInstance().locations.count
+        return StudentLocation.studentLocations.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "studentCell")!
         
-        let student = ParseClient.sharedInstance().locations[indexPath.row]
+        let student = StudentLocation.studentLocations[indexPath.row]
         
         if let firstName = student.firstName, let lastName = student.lastName {
             let letters = NSCharacterSet.letters
@@ -105,8 +111,7 @@ class ListViewController: UIViewController, UITableViewDataSource, UITableViewDe
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         let app = UIApplication.shared
-        let mediaUrl = ParseClient.sharedInstance().locations[indexPath.row].mediaURL
-        
+        let mediaUrl = StudentLocation.studentLocations[indexPath.row].mediaURL
         if let toOpen = mediaUrl {
             if canVerifyUrl(urlString: toOpen) {
                 app.open(URL(string: toOpen)!, options: [:], completionHandler: nil)
