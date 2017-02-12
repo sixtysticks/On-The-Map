@@ -55,6 +55,7 @@ class InfoPostingViewController: UIViewController, UITextFieldDelegate, MKMapVie
             
             if error != nil {
                 self.showAlert("Can't find location")
+                self.hideActivitySpinner(self.activityViewSpinner)
             } else {
                 self.displayView(.MapView)
                 
