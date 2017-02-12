@@ -46,8 +46,6 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     
     func populateMap() {
         
-        showActivitySpinner(activityViewSpinner, style: .gray)
-        
         ParseClient.sharedInstance().displayStudentLocations() { (locations, success, error) in
             
             if success {
@@ -79,7 +77,6 @@ class MapViewController: UIViewController, MKMapViewDelegate {
                 DispatchQueue.main.async {
                     self.mapView.removeAnnotations(self.annotations)
                     self.mapView.addAnnotations(self.annotations)
-                    self.hideActivitySpinner(self.activityViewSpinner)
                 }
                 
             } else {
@@ -90,13 +87,16 @@ class MapViewController: UIViewController, MKMapViewDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(true)
         
         DispatchQueue.main.async {
             self.populateMap()
         }
         
         activityViewSpinner.isHidden = true
-        
     }
     
     func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {

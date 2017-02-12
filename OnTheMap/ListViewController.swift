@@ -38,17 +38,17 @@ class ListViewController: UIViewController, UITableViewDataSource, UITableViewDe
         
         showActivitySpinner(self.activityViewSpinner, style: .gray)
         
-        self.studentTableView.reloadData()
-        
         DispatchQueue.main.async {
-            
+            self.fetchLocations()
             self.hideActivitySpinner(self.activityViewSpinner)
         }
-        print("REFRESH: \(StudentLocation.studentLocations)")
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
         
         showActivitySpinner(self.activityViewSpinner, style: .gray)
         
@@ -56,18 +56,15 @@ class ListViewController: UIViewController, UITableViewDataSource, UITableViewDe
             self.fetchLocations()
             self.hideActivitySpinner(self.activityViewSpinner)
         }
-        print("VIEWDIDLOAD: \(StudentLocation.studentLocations)")
     }
     
 
     func fetchLocations() {
-        self.showActivitySpinner(self.activityViewSpinner, style: .gray)
-        
         ParseClient.sharedInstance().displayStudentLocations { (locations, success, error) in
             if success {
                 
                 DispatchQueue.main.async {
-                    self.hideActivitySpinner(self.activityViewSpinner)
+                    self.studentTableView.reloadData()
                 }
             }
         }

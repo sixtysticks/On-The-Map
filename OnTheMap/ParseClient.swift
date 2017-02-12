@@ -87,6 +87,7 @@ class ParseClient: NSObject {
         ParseClient.sharedInstance().getStudentLocations { (results, success, error) in
             if success {
                 if let data = results!["results"] as AnyObject? {
+                    StudentLocation.studentLocations.removeAll()
                     for result in data as! [AnyObject] {
                         let student = StudentLocation(dictionary: result as! [String : AnyObject])
                         StudentLocation.studentLocations.append(student)
