@@ -26,6 +26,6 @@ struct ParseConstants {
     static let ApiKey = "QuWThTdiRmTux3YaDseUSEpUKo7aBYM737yKd4gY"
     static let DefaultURL = "http://www.udacity.com"
     static let StudentLocation = "StudentLocation"
-    static let Limit = "?limit=100"
+    static let LimitAndOrder = "?limit=100&order=-updatedAt"
     static let NoName = "Anonymous"
 }

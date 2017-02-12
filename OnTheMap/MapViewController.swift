@@ -32,11 +32,14 @@ class MapViewController: UIViewController, MKMapViewDelegate {
             }
         }
     }
+    
     @IBAction func refreshButtonPressed(_ sender: UIBarButtonItem) {
         
+        showActivitySpinner(self.activityViewSpinner, style: .gray)
+        
         DispatchQueue.main.async {
-            self.showActivitySpinner(self.activityViewSpinner, style: .gray)
             self.populateMap()
+            self.hideActivitySpinner(self.activityViewSpinner)
         }
         
     }
@@ -45,7 +48,7 @@ class MapViewController: UIViewController, MKMapViewDelegate {
         
         showActivitySpinner(activityViewSpinner, style: .gray)
         
-        ParseClient.sharedInstance().displayAnnotations() { (locations, success, error) in
+        ParseClient.sharedInstance().displayStudentLocations() { (locations, success, error) in
             
             if success {
                 for location in locations! {

@@ -10,9 +10,6 @@ import Foundation
 
 class ParseClient: NSObject {
     
-    // MARK: Store an array containing student locations
-    var locations = [StudentLocation]()
-    
     // MARK: Shared Instance
     class func sharedInstance() -> ParseClient {
         struct Singleton {
@@ -24,12 +21,17 @@ class ParseClient: NSObject {
     // MARK: Get student locations
     func getStudentLocations(completionHandlerForGetLocations: @escaping (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) {
         
-        let request = NSMutableURLRequest(url: URL(string: "\(ParseConstants.ApiUrl)/\(ParseConstants.StudentLocation)\(ParseConstants.Limit)")!)
+        let request = NSMutableURLRequest(url: URL(string: "\(ParseConstants.ApiUrl)/\(ParseConstants.StudentLocation)\(ParseConstants.LimitAndOrder)")!)
         request.addValue(ParseConstants.AppId, forHTTPHeaderField: "X-Parse-Application-Id")
         request.addValue(ParseConstants.ApiKey, forHTTPHeaderField: "X-Parse-REST-API-Key")
         
         let session = UdacityClient.sharedSession
         let task = session.dataTask(with: request as URLRequest) { data, response, error in
+            
+            guard let _ = data else {
+                completionHandlerForGetLocations(nil, false, UdacityConstants.NetworkProblems)
+                return
+            }
             
             Utilities.shared.handleErrors(data, response, error as NSError?, completionHandler: completionHandlerForGetLocations)
             
@@ -64,31 +66,39 @@ class ParseClient: NSObject {
         let session = UdacityClient.sharedSession
         let task = session.dataTask(with: request as URLRequest) { data, response, error in
             
+            guard let _ = data else {
+                completionHandlerForPostLocation(nil, false, UdacityConstants.NetworkProblems)
+                return
+            }
+            
             Utilities.shared.handleErrors(data, response, error as NSError?, completionHandler: completionHandlerForPostLocation)
             
             self.parseData(data!, completionHandlerForConvertedData: completionHandlerForPostLocation)
+            
+            
 
         }
         task.resume()
     }
     
     // MARK: Display all student locations
-    func displayAnnotations(_ completionHandlerForAnnotations: @escaping (_ result: [StudentLocation]?, _ success: Bool, _ error: String?) -> Void) {
+    func displayStudentLocations(_ completionHandlerForAnnotations: @escaping (_ result: [StudentLocation]?, _ success: Bool, _ error: String?) -> Void) {
         
         ParseClient.sharedInstance().getStudentLocations { (results, success, error) in
             if success {
                 if let data = results!["results"] as AnyObject? {
                     for result in data as! [AnyObject] {
                         let student = StudentLocation(dictionary: result as! [String : AnyObject])
-                        self.locations.append(student)
+                        StudentLocation.studentLocations.append(student)
                     }
-                    completionHandlerForAnnotations(self.locations, true, nil)
+                    completionHandlerForAnnotations(StudentLocation.studentLocations, true, nil)
                 }
             } else {
                 completionHandlerForAnnotations(nil, false, error)
             }
         }
     }
+    
     
     // MARK: Parse the raw JSON data accordingly
     private func parseData(_ data: Data, completionHandlerForConvertedData: (_ result: [String:AnyObject]?, _ success: Bool, _ error: String?) -> Void) {

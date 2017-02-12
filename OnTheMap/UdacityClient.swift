@@ -74,6 +74,11 @@ class UdacityClient: NSObject {
         
         let task = UdacityClient.sharedSession.dataTask(with: request as URLRequest) { data, response, error in
             
+            guard let _ = data else {
+                completionHandlerForPublicData(nil, false, UdacityConstants.NetworkProblems)
+                return
+            }
+            
             Utilities.shared.handleErrors(data, response, error as NSError?, completionHandler: completionHandlerForPublicData)
             
             // Remove first five numbers of data
@@ -149,6 +154,11 @@ class UdacityClient: NSObject {
         }
         
         let task = UdacityClient.sharedSession.dataTask(with: request as URLRequest) { data, response, error in
+            
+            guard let _ = data else {
+                Utilities.shared.handleErrors(data, response, error as NSError?, completionHandler: completionHandlerForDELETE)
+                return
+            }
             
             Utilities.shared.handleErrors(data, response, error as NSError?, completionHandler: completionHandlerForDELETE)
             

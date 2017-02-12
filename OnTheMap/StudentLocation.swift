@@ -10,6 +10,8 @@ import Foundation
 
 struct StudentLocation {
     
+    static var studentLocations = [StudentLocation]()
+    
     var firstName: String?
     var lastName: String?
     var latitude: Double?

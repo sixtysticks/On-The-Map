@@ -412,6 +412,9 @@
                                     <constraint firstItem="I0h-ff-S1s" firstAttribute="top" secondItem="566-NV-Ror" secondAttribute="bottom" constant="10" id="x4D-Hg-XRN"/>
                                 </constraints>
                             </view>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="P6x-2K-mFn">
+                                <rect key="frame" x="177" y="323" width="20" height="20"/>
+                            </activityIndicatorView>
                         </subviews>
                         <color key="backgroundColor" red="0.95686274510000002" green="0.33333333329999998" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                         <constraints>
@@ -420,8 +423,10 @@
                             <constraint firstItem="fMA-sx-uD3" firstAttribute="top" secondItem="ZUh-tk-NZg" secondAttribute="bottom" constant="-20" id="4Ky-r0-qCj"/>
                             <constraint firstAttribute="trailingMargin" secondItem="Ows-qV-c0h" secondAttribute="trailing" constant="-20" id="KAF-or-gw4"/>
                             <constraint firstItem="Ows-qV-c0h" firstAttribute="leading" secondItem="CRJ-7l-sBZ" secondAttribute="leadingMargin" constant="-20" id="Pyt-A7-gFO"/>
+                            <constraint firstItem="P6x-2K-mFn" firstAttribute="centerX" secondItem="CRJ-7l-sBZ" secondAttribute="centerX" id="T4f-lS-D86"/>
                             <constraint firstItem="ELk-fc-5uO" firstAttribute="top" secondItem="fMA-sx-uD3" secondAttribute="bottom" id="TnJ-Bf-SSn"/>
                             <constraint firstItem="fMA-sx-uD3" firstAttribute="leading" secondItem="CRJ-7l-sBZ" secondAttribute="leading" id="Y3m-QZ-61v"/>
+                            <constraint firstItem="P6x-2K-mFn" firstAttribute="centerY" secondItem="CRJ-7l-sBZ" secondAttribute="centerY" id="ZxK-EY-WLC"/>
                             <constraint firstItem="JJc-8S-oxg" firstAttribute="top" secondItem="ZUh-tk-NZg" secondAttribute="bottom" constant="-20" id="aU6-SK-s94"/>
                             <constraint firstItem="JJc-8S-oxg" firstAttribute="leading" secondItem="CRJ-7l-sBZ" secondAttribute="leading" id="gSd-61-xh9"/>
                             <constraint firstAttribute="trailing" secondItem="JJc-8S-oxg" secondAttribute="trailing" id="n59-06-ily"/>
@@ -430,6 +435,7 @@
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="activityViewSpinner" destination="P6x-2K-mFn" id="7EZ-GW-1Xf"/>
                         <outlet property="formFindButton" destination="8Wt-k9-42z" id="7fZ-kL-l8J"/>
                         <outlet property="formTextField" destination="G2j-dF-N5d" id="twc-lj-Lmk"/>
                         <outlet property="formTitleLabel" destination="gC0-az-CUa" id="mHJ-SX-F5W"/>
